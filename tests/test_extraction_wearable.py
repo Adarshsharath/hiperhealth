@@ -144,3 +144,18 @@ def test_support_inmemory_csv(wearable_extractor):
     assert len(wearable_data) == 4
     assert wearable_data[0]['name'] == 'John Doe'
     assert wearable_data[1]['heart_rate'] == 80
+
+
+def test_extract_inmemory_csv_with_missing_column_raises(wearable_extractor):
+    """
+    title: Malformed CSV rows with missing cells should raise extractor error.
+    parameters:
+      wearable_extractor:
+        description: Value for wearable_extractor.
+    """
+    malformed_csv = io.BytesIO(
+        b'name,age,heart_rate,timestamp\nJohn Doe,30,70\n'
+    )
+
+    with pytest.raises(WearableDataExtractorError):
+        wearable_extractor.extract_wearable_data(malformed_csv)

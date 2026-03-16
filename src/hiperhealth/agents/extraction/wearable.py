@@ -273,6 +273,11 @@ class WearableDataFileExtractor(BaseWearableDataExtractor[FileInput]):
 
     def _process_row(self, row: dict[str, Any]) -> dict[str, object]:
         for key, value in row.items():
+            if value is None:
+                raise FileProcessingError(
+                    'File could not be processed. '
+                    'It can be a malformed or corrupted file.'
+                )
             if value.isnumeric():
                 row[key] = int(value)
             elif is_float(value):
@@ -309,7 +314,7 @@ class WearableDataFileExtractor(BaseWearableDataExtractor[FileInput]):
                 file.seek(0)
                 reader = csv.DictReader(io.TextIOWrapper(file, encoding='utf-8'))
                 return [self._process_row(row) for row in reader]
-        except csv.Error as exc:
+        except (csv.Error, FileProcessingError) as exc:
             raise FileProcessingError(
                 'File could not be processed. '
                 'It can be a malformed or corrupted file.'
