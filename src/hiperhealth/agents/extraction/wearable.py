@@ -155,9 +155,9 @@ class WearableDataFileExtractor(BaseWearableDataExtractor[FileInput]):
             # if it's a inmemory-temp file, validate it
             return self._validate_inmemory_file(file)
 
-        if isinstance(file, Path):
+        if isinstance(file, (str, Path)):
             # if it's normal file, gets its extension
-            return file.suffix.replace('.', '') in self.allowed_extensions
+            return Path(file).suffix.replace('.', '') in self.allowed_extensions
 
         return self._get_mime_type(file) in self.allowed_mimetypes
 
@@ -195,9 +195,9 @@ class WearableDataFileExtractor(BaseWearableDataExtractor[FileInput]):
             # Return cached mimetype
             return self._mimetype_cache[cache_key]
 
-        if isinstance(file, Path):
+        if isinstance(file, (str, Path)):
             self._mimetype_cache[cache_key] = cast(
-                MimeType, self.mime.from_file(file)
+                MimeType, self.mime.from_file(str(file))
             )
             return self._mimetype_cache[cache_key]
         elif isinstance(file, io.IOBase):
@@ -214,13 +214,16 @@ class WearableDataFileExtractor(BaseWearableDataExtractor[FileInput]):
 
     def _get_cache_key(self, file: FileInput) -> str:
         cache_key: str
-        if isinstance(file, Path):
-            cache_key = str(file.resolve())
+        if isinstance(file, (str, Path)):
+            cache_key = str(Path(file).resolve())
         else:
             cache_key = str(id(file))  # Usar o id do objeto em memória
         return cache_key
 
     def _is_json(self, file: FileInput) -> bool:
+        if isinstance(file, (str, Path)):
+            return Path(file).suffix.lower() == '.json'
+
         if isinstance(file, (tempfile.SpooledTemporaryFile, io.BytesIO)):
             try:
                 file.seek(0)
@@ -236,6 +239,9 @@ class WearableDataFileExtractor(BaseWearableDataExtractor[FileInput]):
         )
 
     def _is_csv(self, file: FileInput) -> bool:
+        if isinstance(file, (str, Path)):
+            return Path(file).suffix.lower() == '.csv'
+
         if isinstance(file, (tempfile.SpooledTemporaryFile, io.BytesIO)):
             try:
                 file.seek(0)
@@ -277,22 +283,34 @@ class WearableDataFileExtractor(BaseWearableDataExtractor[FileInput]):
         return row
 
     def _process_json_file(self, file: FileInput) -> list[dict[str, object]]:
-        if isinstance(file, (str, Path)):
-            with open(file, 'r', encoding='utf-8') as f:
-                return cast(list[dict[str, object]], json.load(f))
-        else:
-            file.seek(0)
-            return cast(
-                list[dict[str, object]],
-                json.load(io.TextIOWrapper(file, encoding='utf-8')),
-            )
+        try:
+            if isinstance(file, (str, Path)):
+                with open(file, 'r', encoding='utf-8') as f:
+                    return cast(list[dict[str, object]], json.load(f))
+            else:
+                file.seek(0)
+                return cast(
+                    list[dict[str, object]],
+                    json.load(io.TextIOWrapper(file, encoding='utf-8')),
+                )
+        except json.JSONDecodeError as exc:
+            raise FileProcessingError(
+                'File could not be processed. '
+                'It can be a malformed or corrupted file.'
+            ) from exc
 
     def _process_csv_file(self, file: FileInput) -> list[dict[str, object]]:
-        if isinstance(file, (str, Path)):
-            with open(file, 'r', encoding='utf-8') as f:
-                reader = csv.DictReader(f)
+        try:
+            if isinstance(file, (str, Path)):
+                with open(file, 'r', encoding='utf-8') as f:
+                    reader = csv.DictReader(f)
+                    return [self._process_row(row) for row in reader]
+            else:
+                file.seek(0)
+                reader = csv.DictReader(io.TextIOWrapper(file, encoding='utf-8'))
                 return [self._process_row(row) for row in reader]
-        else:
-            file.seek(0)
-            reader = csv.DictReader(io.TextIOWrapper(file, encoding='utf-8'))
-            return [self._process_row(row) for row in reader]
+        except csv.Error as exc:
+            raise FileProcessingError(
+                'File could not be processed. '
+                'It can be a malformed or corrupted file.'
+            ) from exc
