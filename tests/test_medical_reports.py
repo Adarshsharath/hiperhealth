@@ -189,6 +189,33 @@ def test_extract_report_data_orchestrates_validate_extract_convert(
     ]
 
 
+@pytest.mark.skipif(
+    not os.environ.get('OPENAI_API_KEY'), reason='OpenAI API key not available'
+)
+def test_extract_report_data_from_pdf_file(extractor):
+    """Test FHIR data extraction from PDF files."""
+    api_key = os.environ.get('OPENAI_API_KEY')
+    fhir_data = extractor.extract_report_data(PDF_FILE, api_key)
+    assert isinstance(fhir_data, dict)
+    assert len(fhir_data) > 0
+    expected_keys = {'Patient', 'Condition', 'Observation', 'DiagnosticReport'}
+    assert any(key in fhir_data for key in expected_keys)
+
+
+@pytest.mark.skipif(
+    (not os.environ.get('OPENAI_API_KEY')) or (not HAS_TESSERACT),
+    reason='OpenAI API key or tesseract not available',
+)
+def test_extract_report_data_from_image_file(extractor):
+    """Test FHIR data extraction from image files."""
+    api_key = os.environ.get('OPENAI_API_KEY')
+    fhir_data = extractor.extract_report_data(IMAGE_FILE, api_key)
+    assert isinstance(fhir_data, dict)
+    assert len(fhir_data) > 0
+    expected_keys = {'Patient', 'Condition', 'Observation', 'DiagnosticReport'}
+    assert any(key in fhir_data for key in expected_keys)
+
+
 def test_extract_text_uses_cache(monkeypatch, extractor):
     """Repeated extraction should reuse cached text for the same source."""
     call_count = {'pdf': 0}
@@ -212,33 +239,6 @@ def test_extract_text_uses_cache(monkeypatch, extractor):
     assert first == 'cached pdf text'
     assert second == 'cached pdf text'
     assert call_count['pdf'] == 1
-
-
-@pytest.mark.skipif(
-    not os.environ.get('OPENAI_API_KEY'), reason='OpenAI API key not available'
-)
-def test_extract_report_data_from_pdf_file(extractor):
-    """Test FHIR data extraction from PDF files."""
-    api_key = os.environ.get('OPENAI_API_KEY')  # use environment key
-    fhir_data = extractor.extract_report_data(PDF_FILE, api_key)
-    assert isinstance(fhir_data, dict)
-    assert len(fhir_data) > 0
-    expected_keys = {'Patient', 'Condition', 'Observation', 'DiagnosticReport'}
-    assert any(key in fhir_data for key in expected_keys)
-
-
-@pytest.mark.skipif(
-    (not os.environ.get('OPENAI_API_KEY')) or (not HAS_TESSERACT),
-    reason='OpenAI API key or tesseract not available',
-)
-def test_extract_report_data_from_image_file(extractor):
-    """Test FHIR data extraction from image files."""
-    api_key = os.environ.get('OPENAI_API_KEY')  # use environment key
-    fhir_data = extractor.extract_report_data(IMAGE_FILE, api_key)
-    assert isinstance(fhir_data, dict)
-    assert len(fhir_data) > 0
-    expected_keys = {'Patient', 'Condition', 'Observation', 'DiagnosticReport'}
-    assert any(key in fhir_data for key in expected_keys)
 
 
 def test_support_inmemory_pdf(extractor):
