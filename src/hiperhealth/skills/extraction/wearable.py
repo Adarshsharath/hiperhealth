@@ -157,7 +157,8 @@ class WearableDataFileExtractor(BaseWearableDataExtractor[FileInput]):
 
         if isinstance(file, (str, Path)):
             # if it's normal file, gets its extension
-            return Path(file).suffix.replace('.', '') in self.allowed_extensions
+            suffix = Path(file).suffix.replace('.', '')
+            return suffix in self.allowed_extensions
 
         return self._get_mime_type(file) in self.allowed_mimetypes
 
@@ -312,7 +313,8 @@ class WearableDataFileExtractor(BaseWearableDataExtractor[FileInput]):
                     return [self._process_row(row) for row in reader]
             else:
                 file.seek(0)
-                reader = csv.DictReader(io.TextIOWrapper(file, encoding='utf-8'))
+                wrapper = io.TextIOWrapper(file, encoding='utf-8')
+                reader = csv.DictReader(wrapper)
                 return [self._process_row(row) for row in reader]
         except (csv.Error, FileProcessingError) as exc:
             raise FileProcessingError(
