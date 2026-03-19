@@ -1,6 +1,21 @@
 # Release Notes
 ---
 
+# [0.5.0](https://github.com/hiperhealth/hiperhealth/compare/0.4.0...0.5.0) (2026-03-19)
+
+
+### Bug Fixes
+
+* **refactoring:** Fix critical issues, and refactoring the code ([#197](https://github.com/hiperhealth/hiperhealth/issues/197)) ([8a3766b](https://github.com/hiperhealth/hiperhealth/commit/8a3766bb501f4efff26df3dd43c3d3ac19d07a38))
+
+
+### Features
+
+* Add check_requirements by stages; refactor prompt language ([#208](https://github.com/hiperhealth/hiperhealth/issues/208)) ([ec661bc](https://github.com/hiperhealth/hiperhealth/commit/ec661bc385f62d68a4b89570ad7682c2ffa64e4e))
+* Refactor hph structure to support different providers ([#192](https://github.com/hiperhealth/hiperhealth/issues/192)) ([6d48f81](https://github.com/hiperhealth/hiperhealth/commit/6d48f815649898fa02c0446c5b7ea5bb51efba76))
+* **refactor:** Add support for pipelines based on skills ([#201](https://github.com/hiperhealth/hiperhealth/issues/201)) ([716b4c8](https://github.com/hiperhealth/hiperhealth/commit/716b4c8e94ca2e2c88e5452b9bb7e2d12ad74d7e))
+* Remove dependence on anamnesisai, rago, and fhir extraction ([#193](https://github.com/hiperhealth/hiperhealth/issues/193)) ([2f81720](https://github.com/hiperhealth/hiperhealth/commit/2f817207d1b8ea74d23c22b3041ec049532ae87c))
+
 # [0.4.0](https://github.com/hiperhealth/hiperhealth/compare/0.3.1...0.4.0) (2026-03-08)
 
 
