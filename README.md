@@ -253,27 +253,69 @@ record = {
 clean = deidentify_patient_record(record, engine)
 ```
 
-### 7. Installing and registering custom skills
+### 7. Channel-based custom skills
 
-Skills are installed from local paths or Git URLs into an internal registry,
-then registered into a runner by name:
+Custom skills now come from **channels**, where one git repository can expose
+multiple installable skills. External skills use canonical ids in the form
+`<local_channel_name>.<skill_name>`, such as `tm.ayurveda`.
 
 ```python
-from hiperhealth.pipeline import SkillRegistry, create_default_runner, Stage
+from hiperhealth.pipeline import SkillRegistry, create_default_runner
 
-# Install a skill (copies into ~/.hiperhealth/skills/)
 registry = SkillRegistry()
-registry.install('/path/to/ayurveda_skill/')
-registry.install('https://github.com/my_org/tcm_skill')
+registry.add_channel(
+    'https://github.com/my-org/traditional-medicine.git',
+    local_name='tm',
+)
 
-# Register installed skills into a pipeline
+registry.list_channels()
+registry.list_channel_skills('tm')
+registry.list_skills(channel='tm')
+
+registry.install_skill('tm.ayurveda')
+
 runner = create_default_runner()
-runner.register('ayurveda', index=0)       # insert at the beginning
-runner.register('traditional-chinese-medicine')  # append at the end
+runner.register('tm.ayurveda', index=0)
+
+with runner.disabled({'tm.ayurveda'}):
+    ctx_without_ayurveda = runner.run(Stage.TREATMENT, ctx)
 ```
 
-Each skill project must include a `hiperhealth.yaml` metadata file. See
-[Creating Skills](docs/skills.md) for a full guide on writing skill projects.
+Recommended channel layout:
+
+```text
+channel-repo/
+├── skills-channel.yaml
+└── skills/
+    ├── ayurveda/
+    │   ├── skill.yaml
+    │   └── skill.py
+    └── nutrition/
+        ├── skill.yaml
+        └── skill.py
+```
+
+The root `skills-channel.yaml` declares which skill folders are installable.
+Each individual skill keeps its own `skill.yaml`. See
+[Creating Skills](docs/skills.md) for the full schema, examples, and repository
+guidance.
+
+CLI commands map directly to the same API:
+
+```bash
+hiperhealth channel add https://github.com/my-org/traditional-medicine.git --name tm
+hiperhealth channel skills tm
+hiperhealth skill install tm.ayurveda
+hiperhealth skill list --channel tm
+```
+
+The complete reference lives in [Creating Skills](docs/skills.md), including
+channel update and removal flows, `--ref` and `--include-disabled` options,
+source-detection rules, local alias rules, and local-folder versus remote-git
+channel behavior.
+
+Notebook and script workflows use the same registry object, so the same channel
+and skill operations work from Jupyter as well.
 
 ### 8. Custom skill class
 
@@ -309,15 +351,15 @@ class AyurvedaSkill(BaseSkill):
 ### Create development environment
 
 ```bash
-conda env create -f conda/dev.yaml -n hiperhealth
-conda activate hiperhealth
+conda env create -f conda/dev.yaml -n hiperhealthlib
+conda activate hiperhealthlib
 ./scripts/install-dev.sh
 ```
 
 ### Run tests
 
 ```bash
-pytest -vv
+conda run -n hiperhealthlib pytest -vv
 ```
 
 ### Run quality checks

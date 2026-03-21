@@ -38,6 +38,9 @@ dependencies = [
 Homepage = "https://github.com/hiperhealth/hiperhealth"
 Issues = "https://github.com/hiperhealth/hiperhealth/issues"
 
+[project.scripts]
+hiperhealth = "hiperhealth.cli:main"
+
 [project.entry-points."hiperhealth.skills"]
 diagnostics = "hiperhealth.skills.diagnostics:DiagnosticsSkill"
 privacy = "hiperhealth.skills.privacy:PrivacySkill"
@@ -61,7 +64,7 @@ dev = [
   "quarto-cli >=1.8.27",
   "build >=1.3.0",
   "twine >=6",
-  "douki >=0.12.0",
+  "douki >=0.12.1",
   "pytest >=7.3.2",
   "pytest-cov >=4.1.0",
   "coverage >=7.2.7",
